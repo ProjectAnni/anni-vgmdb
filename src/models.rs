@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
-use crate::client::VGMClient;
 use std::collections::HashMap;
+use crate::{VGMClient, Result};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SearchResponse {
@@ -31,8 +31,8 @@ pub struct AlbumInfo {
 }
 
 impl AlbumInfo {
-    pub async fn detail(&self, client: &VGMClient) -> reqwest::Result<AlbumDetail> {
-        client.request(&self.link).await
+    pub async fn detail(&self, client: &VGMClient) -> Result<AlbumDetail> {
+        Ok(client.request(&self.link).await?)
     }
 }
 

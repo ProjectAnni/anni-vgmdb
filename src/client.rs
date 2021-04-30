@@ -1,5 +1,6 @@
 use serde::de::DeserializeOwned;
 use crate::models::{SearchResponse, AlbumDetail};
+use crate::{Result, VGMError};
 
 pub struct VGMClient {
     client: reqwest::Client,
@@ -12,7 +13,7 @@ impl VGMClient {
         }
     }
 
-    pub async fn request<T, S>(&self, path: S) -> reqwest::Result<T>
+    pub async fn request<T, S>(&self, path: S) -> Result<T>
         where T: DeserializeOwned,
               S: AsRef<str> {
         Ok(self.client.get(format!("https://vgmdb.info/{}?format=json", path.as_ref()))
@@ -20,12 +21,16 @@ impl VGMClient {
             .json().await?)
     }
 
-    pub async fn search(&self, query: &str) -> reqwest::Result<SearchResponse> {
-        self.request(format!("search/{}", query)).await
+    pub async fn search(&self, query: &str) -> Result<SearchResponse> {
+        Ok(self.request(format!("search/{}", query)).await?)
     }
 
-    pub async fn album(&self, id: &str) -> reqwest::Result<AlbumDetail> {
-        self.request(format!("album/{}", id)).await
+    pub async fn album(&self, catalog: &str) -> Result<AlbumDetail> {
+        let result = self.search(catalog).await?;
+        if result.results().albums.is_empty() {
+            return Err(VGMError::NoAlbumFound);
+        }
+        Ok(result.results().albums[0].detail(&self).await?)
     }
 }
 
@@ -44,10 +49,8 @@ mod tests {
     #[tokio::test]
     async fn test_album() -> Result<(), Box<dyn std::error::Error>> {
         let client = VGMClient::new();
-        let response = client.search("LACM-14986").await?;
-        let ref albums = response.results().albums;
-        let detail = albums[0].detail(&client).await?;
-        println!("{:#?}", detail);
+        let album = client.album("LACM-14986").await?;
+        println!("{:#?}", album);
         Ok(())
     }
 }
