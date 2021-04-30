@@ -90,13 +90,7 @@ pub struct AlbumDetail {
     stores: Vec<WebsiteItem>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-struct MultiLanguageString {
-    en: String,
-    ja: String,
-    #[serde(rename = "ja-latn")]
-    ja_latn: Option<String>,
-}
+type MultiLanguageString = HashMap<String, String>;
 
 #[derive(Debug, Serialize, Deserialize)]
 struct ArtistInfo {
@@ -164,7 +158,15 @@ struct RelatedAlbum {
 
 #[derive(Debug, Serialize, Deserialize)]
 struct Disc {
-    //
+    disc_length: String,
+    name: String,
+    tracks: Vec<Track>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct Track {
+    names: MultiLanguageString,
+    track_length: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

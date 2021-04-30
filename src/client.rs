@@ -35,7 +35,8 @@ mod tests {
 
     #[tokio::test]
     async fn test_search() -> Result<(), Box<dyn std::error::Error>> {
-        let result = VGMClient::new().search("幼なじみが絶対に負けないラブコメ").await?;
+        // THE IDOLM@STER SHINY COLORS GR@DATE WING 05
+        let result = VGMClient::new().search("LACM-14986").await?;
         println!("{:#?}", result);
         Ok(())
     }
@@ -43,7 +44,7 @@ mod tests {
     #[tokio::test]
     async fn test_album() -> Result<(), Box<dyn std::error::Error>> {
         let client = VGMClient::new();
-        let response = client.search("幼なじみが絶対に負けないラブコメ").await?;
+        let response = client.search("LACM-14986").await?;
         let ref albums = response.results().albums;
         let detail = albums[0].detail(&client).await?;
         println!("{:#?}", detail);
