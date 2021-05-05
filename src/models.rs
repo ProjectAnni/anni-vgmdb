@@ -133,7 +133,7 @@ struct ArtistInfo {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct NamedItem {
-    link: String,
+    link: Option<String>,
     names: MultiLanguageString,
 }
 
