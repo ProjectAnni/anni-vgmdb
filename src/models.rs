@@ -47,47 +47,47 @@ pub struct AlbumDetail {
     notes: String,
     classification: String,
 
-    arrangers: Vec<NamedItem>,
-    composers: Vec<NamedItem>,
-    lyricists: Vec<NamedItem>,
-    performers: Vec<NamedItem>,
+    pub arrangers: Vec<NamedItem>,
+    pub composers: Vec<NamedItem>,
+    pub lyricists: Vec<NamedItem>,
+    pub performers: Vec<NamedItem>,
 
-    covers: Vec<AlbumArt>,
+    pub covers: Vec<AlbumArt>,
     discs: Vec<Disc>,
-    media_format: String,
-    meta: Meta,
-    picture_full: String,
-    picture_small: String,
-    picture_thumb: String,
-    publish_format: String,
+    pub media_format: String,
+    pub meta: Meta,
+    pub picture_full: String,
+    pub picture_small: String,
+    pub picture_thumb: String,
+    pub publish_format: String,
 
-    category: Option<String>,
+    pub category: Option<String>,
     #[serde(default)]
-    categories: Vec<String>,
+    pub categories: Vec<String>,
 
     #[serde(default)]
-    organizations: Vec<NamedItem>,
-    distributor: Option<NamedItem>,
+    pub organizations: Vec<NamedItem>,
+    pub distributor: Option<NamedItem>,
 
-    publisher: Option<NamedItem>,
+    pub publisher: Option<NamedItem>,
     #[serde(default)]
-    platforms: Vec<String>,
+    pub platforms: Vec<String>,
     #[serde(default)]
-    products: Vec<NamedItem>,
+    pub products: Vec<NamedItem>,
 
-    release_date: Option<String>,
-    release_price: Option<Price>,
+    pub release_date: Option<String>,
+    pub release_price: Option<Price>,
     #[serde(default)]
-    websites: HashMap<String, WebsiteItem>,
+    pub websites: HashMap<String, WebsiteItem>,
 
-    votes: u32,
-    rating: Option<f32>,
+    pub votes: u32,
+    pub rating: Option<f32>,
     #[serde(default)]
-    related: Vec<RelatedAlbum>,
+    pub related: Vec<RelatedAlbum>,
     #[serde(default)]
-    reprints: Vec<ReprintedAlbum>,
+    pub reprints: Vec<ReprintedAlbum>,
     #[serde(default)]
-    stores: Vec<WebsiteItem>,
+    pub stores: Vec<WebsiteItem>,
 }
 
 impl AlbumDetail {
