@@ -132,7 +132,7 @@ struct ArtistInfo {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-struct NamedItem {
+pub struct NamedItem {
     link: String,
     names: MultiLanguageString,
 }
@@ -146,7 +146,7 @@ struct Product {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-struct AlbumArt {
+pub struct AlbumArt {
     name: String,
     full: String,
     medium: String,
@@ -154,33 +154,33 @@ struct AlbumArt {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-struct Price {
+pub struct Price {
     price: PriceInner,
     currency: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(untagged)]
-enum PriceInner {
+pub enum PriceInner {
     Number(f32),
     String(String),
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-struct WebsiteItem {
+pub struct WebsiteItem {
     link: String,
     name: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-struct ReprintedAlbum {
+pub struct ReprintedAlbum {
     link: String,
     catalog: String,
     note: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-struct RelatedAlbum {
+pub struct RelatedAlbum {
     catalog: String,
     link: String,
     names: MultiLanguageString,
@@ -231,7 +231,7 @@ impl Track {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-struct Meta {
+pub struct Meta {
     added_date: String,
     edited_date: String,
     fetched_date: Option<String>,
