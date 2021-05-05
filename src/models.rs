@@ -96,7 +96,7 @@ impl AlbumDetail {
     }
 
     pub fn name(&self) -> &str {
-        self.names.get("jp")
+        self.names.get("ja")
             .map(|k| k.as_str())
             .unwrap_or(
                 self.names.get("Japanese")
@@ -217,7 +217,7 @@ pub struct Track {
 
 impl Track {
     pub fn name(&self) -> &str {
-        if let Some(value) = self.names.get("jp") {
+        if let Some(value) = self.names.get("ja") {
             return value.as_str();
         } else if let Some(value) = self.names.get("Japanese") {
             return value.as_str();
