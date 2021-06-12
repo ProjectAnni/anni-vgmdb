@@ -26,6 +26,7 @@ pub struct SearchResults {
 pub struct AlbumInfo {
     catalog: String,
     link: String,
+    #[serde(default)]
     release_date: String,
     titles: MultiLanguageString,
 }

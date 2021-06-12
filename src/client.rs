@@ -16,13 +16,13 @@ impl VGMClient {
     pub async fn request<T, S>(&self, path: S) -> Result<T>
         where T: DeserializeOwned,
               S: AsRef<str> {
-        Ok(self.client.get(format!("https://vgmdb.info/{}?format=json", path.as_ref()))
+        Ok(self.client.get(format!("https://vgmdb.info/{}{}format=json", path.as_ref(), if path.as_ref().contains("?") { "&" } else { "?" }))
             .send().await?
             .json().await?)
     }
 
     pub async fn search(&self, query: &str) -> Result<SearchResponse> {
-        Ok(self.request(format!("search/{}", query)).await?)
+        Ok(self.request(format!("search?q={}", query)).await?)
     }
 
     pub async fn album(&self, catalog: &str) -> Result<AlbumDetail> {
@@ -49,7 +49,7 @@ mod tests {
     #[tokio::test]
     async fn test_album() -> Result<(), Box<dyn std::error::Error>> {
         let client = VGMClient::new();
-        let album = client.album("LACM-14986").await?;
+        let album = client.album("BNEI-ML/RI-2017").await?;
         println!("{:#?}", album);
         Ok(())
     }
