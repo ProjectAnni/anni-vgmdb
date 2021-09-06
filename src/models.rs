@@ -18,7 +18,8 @@ impl SearchResponse {
 pub struct SearchResults {
     pub albums: Vec<AlbumInfo>,
     artists: Vec<ArtistInfo>,
-    orgs: Vec<NamedItem>,
+    #[serde(rename = "orgs")]
+    organizations: Vec<NamedItem>,
     products: Vec<Product>,
 }
 
@@ -33,7 +34,7 @@ pub struct AlbumInfo {
 
 impl AlbumInfo {
     pub async fn detail(&self, client: &VGMClient) -> Result<AlbumDetail> {
-        Ok(client.request(&self.link).await?)
+        Ok(client.request(&self.link, None).await?)
     }
 }
 

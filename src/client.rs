@@ -3,26 +3,34 @@ use crate::models::{SearchResponse, AlbumDetail};
 use crate::{Result, VGMError};
 
 pub struct VGMClient {
+    host: String,
     client: reqwest::Client,
 }
 
 impl VGMClient {
-    pub fn new() -> Self {
+    pub fn new(mut host: String) -> Self {
+        if !host.ends_with("/") {
+            host += "/"
+        }
         Self {
+            host,
             client: Default::default(),
         }
     }
 
-    pub async fn request<T, S>(&self, path: S) -> Result<T>
+    pub async fn request<T, S>(&self, path: S, param: Option<String>) -> Result<T>
         where T: DeserializeOwned,
               S: AsRef<str> {
-        Ok(self.client.get(format!("https://vgmdb.info/{}{}format=json", path.as_ref(), if path.as_ref().contains("?") { "&" } else { "?" }))
+        Ok(self.client.get(format!("{host}{path}?format=json&{param}",
+                                   host = self.host,
+                                   path = path.as_ref(),
+                                   param = param.unwrap_or_default()))
             .send().await?
             .json().await?)
     }
 
     pub async fn search(&self, query: &str) -> Result<SearchResponse> {
-        Ok(self.request(format!("search?q={}", query)).await?)
+        Ok(self.request("search", Some(format!("q={}", query))).await?)
     }
 
     pub async fn album(&self, catalog: &str) -> Result<AlbumDetail> {
@@ -34,6 +42,12 @@ impl VGMClient {
     }
 }
 
+impl Default for VGMClient {
+    fn default() -> Self {
+        Self::new("https://vgmdb.info/".to_string())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::client::VGMClient;
@@ -41,14 +55,14 @@ mod tests {
     #[tokio::test]
     async fn test_search() -> Result<(), Box<dyn std::error::Error>> {
         // THE IDOLM@STER SHINY COLORS GR@DATE WING 05
-        let result = VGMClient::new().search("LACM-14986").await?;
+        let result = VGMClient::default().search("LACM-14986").await?;
         println!("{:#?}", result);
         Ok(())
     }
 
     #[tokio::test]
     async fn test_album() -> Result<(), Box<dyn std::error::Error>> {
-        let client = VGMClient::new();
+        let client = VGMClient::default();
         let album = client.album("BNEI-ML/RI-2017").await?;
         println!("{:#?}", album);
         Ok(())
