@@ -80,7 +80,7 @@ pub struct AlbumDetail {
     pub release_date: Option<String>,
     pub release_price: Option<Price>,
     #[serde(default)]
-    pub websites: HashMap<String, WebsiteItem>,
+    pub websites: HashMap<String, Vec<WebsiteItem>>,
 
     pub votes: u32,
     pub rating: Option<f32>,
