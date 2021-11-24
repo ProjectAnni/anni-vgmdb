@@ -33,8 +33,14 @@ pub struct AlbumInfo {
 }
 
 impl AlbumInfo {
+    #[cfg(not(feature = "blocking"))]
     pub async fn detail(&self, client: &VGMClient) -> Result<AlbumDetail> {
         Ok(client.request(&self.link, None).await?)
+    }
+
+    #[cfg(feature = "blocking")]
+    pub fn detail(&self, client: &VGMClient) -> Result<AlbumDetail> {
+        Ok(client.request(&self.link, None)?)
     }
 }
 
