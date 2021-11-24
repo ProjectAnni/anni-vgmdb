@@ -64,7 +64,7 @@ impl VGMClient {
 
     #[cfg(feature = "blocking")]
     pub fn search(&self, query: &str) -> Result<SearchResponse> {
-        Ok(self.request("search", Some(format!("q={}", query))).await?)
+        Ok(self.request("search", Some(format!("q={}", query)))?)
     }
 
     #[cfg(feature = "blocking")]
