@@ -1,5 +1,6 @@
 pub mod models;
 mod client;
+mod utils;
 
 pub use client::VGMClient;
 
@@ -10,6 +11,9 @@ pub enum VGMError {
 
     #[error("no album found from search")]
     NoAlbumFound,
+
+    #[error("invalid date format")]
+    InvalidDate,
 }
 
 pub(crate) type Result<T> = std::result::Result<T, VGMError>;

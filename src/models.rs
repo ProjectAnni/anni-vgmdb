@@ -1,47 +1,40 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use crate::{VGMClient, Result};
+use std::fmt::{Debug, Formatter};
+use crate::VGMClient;
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct SearchResponse {
-    link: String,
-    results: SearchResults,
+pub struct SearchResponse<'client> {
+    client: &'client VGMClient,
+    inner: SearchResult,
 }
 
-impl SearchResponse {
-    pub fn results(&self) -> &SearchResults {
-        &self.results
+impl<'client> SearchResponse<'client> {
+    pub(crate) fn new(client: &'client VGMClient, inner: SearchResult) -> Self {
+        SearchResponse {
+            client,
+            inner,
+        }
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct SearchResults {
-    pub albums: Vec<AlbumInfo>,
-    artists: Vec<ArtistInfo>,
-    #[serde(rename = "orgs")]
-    organizations: Vec<NamedItem>,
-    products: Vec<Product>,
+impl<'client> Debug for SearchResponse<'client> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        self.inner.fmt(f)
+    }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug)]
+pub enum SearchResult {
+    Album(String),
+    List(Vec<AlbumInfo>),
+}
+
+#[derive(Debug)]
 pub struct AlbumInfo {
-    catalog: String,
-    link: String,
-    #[serde(default)]
-    release_date: String,
-    titles: MultiLanguageString,
-}
-
-impl AlbumInfo {
-    #[cfg(not(feature = "blocking"))]
-    pub async fn detail(&self, client: &VGMClient) -> Result<AlbumDetail> {
-        Ok(client.request(&self.link, None).await?)
-    }
-
-    #[cfg(feature = "blocking")]
-    pub fn detail(&self, client: &VGMClient) -> Result<AlbumDetail> {
-        Ok(client.request(&self.link, None)?)
-    }
+    pub catalog: Option<String>,
+    pub title: MultiLanguageString,
+    pub release_date: String,
+    pub link: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -63,7 +56,6 @@ pub struct AlbumDetail {
     pub covers: Vec<AlbumArt>,
     discs: Vec<Disc>,
     pub media_format: String,
-    pub meta: Meta,
     pub picture_full: String,
     pub picture_small: String,
     pub picture_thumb: String,
@@ -84,18 +76,9 @@ pub struct AlbumDetail {
     pub products: Vec<NamedItem>,
 
     pub release_date: Option<String>,
-    pub release_price: Option<Price>,
-    #[serde(default)]
-    pub websites: HashMap<String, Vec<WebsiteItem>>,
 
     pub votes: u32,
     pub rating: Option<f32>,
-    #[serde(default)]
-    pub related: Vec<RelatedAlbum>,
-    #[serde(default)]
-    pub reprints: Vec<ReprintedAlbum>,
-    #[serde(default)]
-    pub stores: Vec<WebsiteItem>,
 }
 
 impl AlbumDetail {
@@ -130,7 +113,7 @@ impl AlbumDetail {
     }
 }
 
-type MultiLanguageString = HashMap<String, String>;
+pub(crate) type MultiLanguageString = HashMap<String, String>;
 
 #[derive(Debug, Serialize, Deserialize)]
 struct ArtistInfo {
@@ -146,54 +129,11 @@ pub struct NamedItem {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-struct Product {
-    link: String,
-    names: MultiLanguageString,
-    #[serde(rename = "type")]
-    product_type: String,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
 pub struct AlbumArt {
     name: String,
     full: String,
     medium: String,
     thumb: String,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Price {
-    price: PriceInner,
-    currency: Option<String>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum PriceInner {
-    Number(f32),
-    String(String),
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct WebsiteItem {
-    link: String,
-    name: String,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct ReprintedAlbum {
-    link: String,
-    catalog: String,
-    note: String,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct RelatedAlbum {
-    catalog: String,
-    link: String,
-    names: MultiLanguageString,
-    #[serde(rename = "type")]
-    album_type: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -236,13 +176,4 @@ impl Track {
             unreachable!()
         }
     }
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Meta {
-    added_date: String,
-    edited_date: String,
-    fetched_date: Option<String>,
-    ttl: u32,
-    visitors: u32,
 }
