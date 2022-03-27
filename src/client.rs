@@ -1,6 +1,7 @@
+use std::collections::HashMap;
 use select::document::Document;
 use select::predicate::{Attr, Name, Predicate};
-use crate::models::{SearchResult, AlbumInfo, SearchResponse};
+use crate::models::{SearchResult, AlbumInfo, SearchResponse, AlbumDetail, Disc};
 use crate::Result;
 use crate::utils::{parse_date, parse_multi_language};
 
@@ -62,13 +63,87 @@ impl VGMClient {
         }
     }
 
-    // pub async fn album(&self, catalog: &str) -> Result<AlbumDetail> {
-    //     let result = self.search(catalog).await?;
-    //     if result.results().albums.is_empty() {
-    //         return Err(VGMError::NoAlbumFound);
-    //     }
-    //     Ok(result.results().albums[0].detail(&self).await?)
-    // }
+    pub async fn album(&self, id: &str) -> Result<AlbumDetail> {
+        let response = self.client.get(&format!("https://vgmdb.net/album/{id}"))
+            .header("Cookie", "TODO")
+            .send().await?;
+        let html = response.text().await?;
+        let document = Document::from(html.as_str());
+
+        // 1. title
+        let title = document.select(Name("h1")).next().unwrap();
+        let title = parse_multi_language(&title);
+
+        let info = document
+            .select(Attr("id", "album_infobit_large"))
+            .nth(0).unwrap()
+            .select(Name("tr"))
+            .collect::<Vec<_>>();
+
+        // 2. catalog
+        let catalog = info[0].select(Name("td").and(Attr("width", "100%"))).next().unwrap().text();
+        // 3. release date
+        let release_date = info[2].select(Name("td").descendant(Name("a"))).next().unwrap().text();
+        let release_date = parse_date(release_date.trim())?;
+
+        let mut album = AlbumDetail {
+            link: "".to_string(),
+            title,
+            catalog: Some(catalog), // TODO: N/A
+            release_date,
+            discs: vec![],
+        };
+
+        // 4. track_list
+        let track_list_nav = document.select(Attr("id", "tlnav")).next().unwrap();
+        let track_list = document.select(Attr("id", "tracklist")).next().unwrap();
+        for list in track_list.select(Attr("class", "tl")) {
+            let reference = list.attr("id").unwrap();
+            let language = track_list_nav.select(Attr("rel", reference)).next().unwrap().text();
+
+            let mut discs = Vec::new();
+            for disc in list.select(Attr("style", "font-size:8pt").descendant(Name("b"))) {
+                let disc_title = disc.text();
+                let mut table = disc.parent().unwrap();
+                loop {
+                    table = table.next().unwrap();
+                    if let Some("table") = table.name() {
+                        break;
+                    }
+                }
+                let mut tracks = Vec::new();
+                for track in table.select(Name("tr")) {
+                    let track_name = track.select(Name("td").and(Attr("width", "100%"))).next().unwrap().text();
+                    let track_name = track_name.trim().to_string();
+                    tracks.push(track_name);
+                }
+                discs.push((disc_title, tracks));
+            }
+
+            if album.discs.is_empty() {
+                // initialize MultiLanguage tracks
+                album.discs.append(&mut discs.into_iter().map(|(title, tracks)| {
+                    let tracks = tracks.into_iter().map(|track| {
+                        let mut tracks = HashMap::new();
+                        tracks.insert(language.to_string(), track);
+                        tracks
+                    }).collect();
+                    Disc {
+                        title,
+                        tracks,
+                    }
+                }).collect::<Vec<_>>());
+            } else {
+                for (disc, (_, tracks)) in album.discs.iter_mut().zip(discs.into_iter()) {
+                    for (track, new_track) in disc.tracks.iter_mut().zip(tracks.into_iter()) {
+                        track.insert(language.to_string(), new_track);
+                    }
+                }
+            }
+        }
+
+        Ok(album)
+    }
 }
 
 #[cfg(test)]
@@ -83,11 +158,11 @@ mod tests {
         Ok(())
     }
 
-    // #[tokio::test]
-    // async fn test_album() -> Result<(), Box<dyn std::error::Error>> {
-    //     let client = VGMClient::default();
-    //     let album = client.album("BNEI-ML/RI-2017").await?;
-    //     println!("{:#?}", album);
-    //     Ok(())
-    // }
+    #[tokio::test]
+    async fn test_album() -> Result<(), Box<dyn std::error::Error>> {
+        let client = VGMClient::default();
+        let album = client.album("31040").await?;
+        println!("{:#?}", album);
+        Ok(())
+    }
 }
