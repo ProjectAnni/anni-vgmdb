@@ -1,7 +1,14 @@
 [package]
 name = "anni-vgmdb"
-version = "0.2.1"
+description = "A simple VGMdb client."
 authors = ["Yesterday17 <mmf@mmf.moe>"]
+license = "Apache-2.0"
+
+readme = "Readme.md"
+repository = "https://github.com/ProjectAnni/anni-vgmdb"
+keywords = ["vgmdb"]
+
+version = "0.2.1"
 edition = "2021"
 
 [dependencies]
