@@ -131,7 +131,7 @@ impl FromStr for AlbumDetail {
                 // initialize MultiLanguage tracks
                 album.discs.append(&mut discs.into_iter().map(|(title, tracks)| {
                     let tracks = tracks.into_iter().map(|track| {
-                        let mut tracks = HashMap::new();
+                        let mut tracks = MultiLanguageString::default();
                         tracks.insert(language.to_string(), track);
                         tracks
                     }).collect();
@@ -153,10 +153,26 @@ impl FromStr for AlbumDetail {
     }
 }
 
-pub(crate) type MultiLanguageString = HashMap<String, String>;
 
 #[derive(Debug)]
 pub struct Disc {
     pub title: String,
     pub tracks: Vec<MultiLanguageString>,
+}
+
+#[derive(Debug, Default)]
+pub struct MultiLanguageString(HashMap<String, String>);
+
+impl MultiLanguageString {
+    pub fn insert(&mut self, language: String, value: String) {
+        self.0.insert(language, value);
+    }
+
+    pub fn get(&self) -> Option<&str> {
+        self.0.get("ja")
+            .or_else(|| self.0.get("Japanese"))
+            .or_else(|| self.0.get("English"))
+            .or_else(|| self.0.values().next())
+            .map(|s| s.as_str())
+    }
 }

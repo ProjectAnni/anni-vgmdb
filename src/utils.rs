@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use select::node::Node;
 use select::predicate::Attr;
 use crate::{Result, VGMError};
@@ -45,7 +44,7 @@ pub(crate) fn parse_date(input: &str) -> Result<String> {
 }
 
 pub(crate) fn parse_multi_language(node: &Node) -> MultiLanguageString {
-    let mut title = HashMap::new();
+    let mut title = MultiLanguageString::default();
     for node in node.select(Attr("class", "albumtitle")) {
         let language = node.attr("lang").unwrap();
         let mut text = String::new();
