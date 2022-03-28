@@ -11,11 +11,6 @@ pub struct VGMClient {
 }
 
 impl VGMClient {
-    // pub async fn request<T, S>(&self, path: S, param: Option<String>) -> Result<T>
-    //     where T: DeserializeOwned,
-    //           S: AsRef<str> {
-    // }
-
     pub async fn search_albums(&self, query: &str) -> Result<SearchResponse<'_>> {
         let response = self.client.get(&format!("https://vgmdb.net/search?type=album&q={query}"))
             .header("Cookie", "TODO")

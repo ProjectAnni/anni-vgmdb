@@ -19,6 +19,17 @@ impl<'client> SearchResponse<'client> {
         }
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
+    pub fn len(&self) -> usize {
+        match &self.inner {
+            SearchResult::Album(_) => 1,
+            SearchResult::List(list) => list.len(),
+        }
+    }
+
     pub async fn get_album(&self, index: Option<usize>) -> Result<AlbumDetail> {
         match &self.inner {
             SearchResult::Album(data) => AlbumDetail::from_str(data),
