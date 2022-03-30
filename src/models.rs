@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
 use std::str::FromStr;
 use select::document::Document;
-use select::predicate::{Attr, Name, Predicate};
+use select::predicate::{Attr, Class, Name, Predicate};
 use crate::{VGMClient, Result, VGMError};
 use crate::utils::{parse_date, parse_multi_language};
 
@@ -92,7 +92,11 @@ impl FromStr for AlbumDetail {
         let mut release_date = None;
 
         for line in info.select(Name("tr")) {
-            let key = line.select(Name("b")).next().unwrap().text();
+            let key = line.select(Name("span").and(Class("label")).descendant(Name("b"))).next();
+            if key.is_none() {
+                continue;
+            }
+            let key = key.unwrap().text();
             let value = line.last_child().unwrap().text();
             if key == "Catalog Number" {
                 catalog = Some(value.trim().to_string());

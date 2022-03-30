@@ -82,7 +82,7 @@ mod tests {
     #[tokio::test]
     async fn test_album() -> Result<(), Box<dyn std::error::Error>> {
         let client = VGMClient::default();
-        let result = client.search_albums("BNEI-ML").await?;
+        let result = client.search_albums("LACA-9356~7").await?;
         let album = result.get_album(None).await?;
         println!("{:#?}", album);
         Ok(())
