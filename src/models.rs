@@ -92,19 +92,23 @@ impl FromStr for AlbumDetail {
         let mut release_date = None;
 
         for line in info.select(Name("tr")) {
-            let key = line.select(Name("span").and(Class("label")).descendant(Name("b"))).next();
-            if key.is_none() {
-                continue;
-            }
-            let key = key.unwrap().text();
-            let value = line.last_child().unwrap().text();
-            if key == "Catalog Number" {
-                catalog = Some(value.trim().to_string());
-                if let Some("N/A") = catalog.as_deref() {
-                    catalog = None;
+            if let Some(key) = line.select(Name("span").and(Class("label")).descendant(Name("b"))).next() {
+                let key = key.text();
+                if key == "Catalog Number" {
+                    let value = line.last_child().unwrap();
+                    let value = if let Some(value) = value.select(Attr("id", "childbrowse").descendant(Name("a"))).next() {
+                        value.text()
+                    } else {
+                        value.text()
+                    };
+                    catalog = Some(value.trim().to_string());
+                    if let Some("N/A") = catalog.as_deref() {
+                        catalog = None;
+                    }
+                } else if key == "Release Date" {
+                    let value = line.last_child().unwrap().text();
+                    release_date = parse_date(value.trim()).ok();
                 }
-            } else if key == "Release Date" {
-                release_date = parse_date(value.trim()).ok();
             }
         }
 
