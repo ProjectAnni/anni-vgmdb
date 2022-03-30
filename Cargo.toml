@@ -8,7 +8,7 @@ readme = "Readme.md"
 repository = "https://github.com/ProjectAnni/anni-vgmdb"
 keywords = ["vgmdb"]
 
-version = "0.2.1"
+version = "0.2.2"
 edition = "2021"
 
 [dependencies]
@@ -17,9 +17,9 @@ thiserror = "1.0"
 select = "0.6.0-alpha.1"
 
 [dependencies.reqwest]
-version = "0.11"
+version = "0.11.10"
 default-features = false
-features = ["json", "rustls-tls"]
+features = ["rustls-tls"]
 
 [dev-dependencies]
 tokio = { version = "1.5.0", features = ["full"] }
