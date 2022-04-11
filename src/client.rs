@@ -18,7 +18,7 @@ impl VGMClient {
         if response.url().path().starts_with("/album") {
             Ok(SearchResponse::new(
                 self,
-                SearchResult::Album(response.text().await?),
+                SearchResult::Album(AlbumDetail::from_str(&response.text().await?)?),
             ))
         } else {
             let html = response.text().await?;
@@ -83,7 +83,7 @@ mod tests {
     async fn test_album() -> Result<(), Box<dyn std::error::Error>> {
         let client = VGMClient::default();
         let result = client.search_albums("LACA-9356~7").await?;
-        let album = result.get_album(None).await?;
+        let album = result.into_album(None).await?;
         println!("{:#?}", album);
         Ok(())
     }

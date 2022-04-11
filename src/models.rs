@@ -30,13 +30,26 @@ impl<'client> SearchResponse<'client> {
         }
     }
 
-    pub async fn get_album(&self, index: Option<usize>) -> Result<AlbumDetail> {
+    /// Get the list of search results.
+    pub fn albums(&self) -> Vec<&AlbumInfo> {
         match &self.inner {
-            SearchResult::Album(data) => AlbumDetail::from_str(data),
+            SearchResult::Album(album) => vec![&album.info],
+            SearchResult::List(list) => list.iter().collect(),
+        }
+    }
+
+    pub async fn into_album(self, index: Option<usize>) -> Result<AlbumDetail> {
+        match self.inner {
+            SearchResult::Album(data) => Ok(data),
             SearchResult::List(list) => {
                 let index = index.unwrap_or(0);
-                let info = &list[index];
-                self.client.album(&info.id).await
+                if list.len() > index {
+                    let id = &list[index].id;
+                    let album_detail = self.client.album(id).await?;
+                    Ok(album_detail)
+                } else {
+                    Err(VGMError::NoAlbumFound)
+                }
             }
         }
     }
@@ -50,25 +63,23 @@ impl<'client> Debug for SearchResponse<'client> {
 
 #[derive(Debug)]
 pub enum SearchResult {
-    Album(String),
+    Album(AlbumDetail),
     List(Vec<AlbumInfo>),
 }
 
 #[derive(Debug)]
 pub struct AlbumInfo {
-    pub catalog: Option<String>,
-    pub title: MultiLanguageString,
-    pub release_date: String,
     pub id: String,
+
+    pub title: MultiLanguageString,
+    pub catalog: Option<String>,
+    pub release_date: String,
 }
 
 #[derive(Debug)]
 pub struct AlbumDetail {
     pub link: String,
-
-    pub title: MultiLanguageString,
-    pub catalog: Option<String>,
-    pub release_date: String,
+    info: AlbumInfo,
     pub discs: Vec<Disc>,
 }
 
@@ -114,9 +125,12 @@ impl FromStr for AlbumDetail {
 
         let mut album = AlbumDetail {
             link: "".to_string(), // TODO: get link
-            title,
-            catalog,
-            release_date: release_date.unwrap(),
+            info: AlbumInfo {
+                id: "".to_string(), // TODO: add id
+                title,
+                catalog,
+                release_date: release_date.unwrap(),
+            },
             discs: vec![],
         };
 
@@ -172,6 +186,19 @@ impl FromStr for AlbumDetail {
     }
 }
 
+impl AlbumDetail {
+    pub fn title(&self) -> Option<&str> {
+        self.info.title.get()
+    }
+
+    pub fn catalog(&self) -> Option<&str> {
+        self.info.catalog.as_deref()
+    }
+
+    pub fn release_date(&self) -> &str {
+        &self.info.release_date
+    }
+}
 
 #[derive(Debug)]
 pub struct Disc {
