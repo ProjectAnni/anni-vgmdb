@@ -12,8 +12,12 @@ use anni_vgmdb::VGMClient;
 async fn main() -> anyhow::Result<()> {
     let client = VGMClient::default();
     let search = client.search_albums("TEST").await?;
+    for album in search.albums() {
+        println!("{:?}", album);
+    }
+
     if !search.is_empty() {
-        let album = search.get_album(None).await?;
+        let album = search.into_album(None).await?;
         println!("{:?}", album);
     }
 
