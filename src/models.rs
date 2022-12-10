@@ -1,10 +1,10 @@
+use crate::utils::{parse_date, parse_multi_language};
+use crate::{Result, VGMClient, VGMError};
+use select::document::Document;
+use select::predicate::{Attr, Class, Name, Predicate};
 use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
 use std::str::FromStr;
-use select::document::Document;
-use select::predicate::{Attr, Class, Name, Predicate};
-use crate::{VGMClient, Result, VGMError};
-use crate::utils::{parse_date, parse_multi_language};
 
 pub struct SearchResponse<'client> {
     client: &'client VGMClient,
@@ -13,10 +13,7 @@ pub struct SearchResponse<'client> {
 
 impl<'client> SearchResponse<'client> {
     pub(crate) fn new(client: &'client VGMClient, inner: SearchResult) -> Self {
-        SearchResponse {
-            client,
-            inner,
-        }
+        SearchResponse { client, inner }
     }
 
     pub fn is_empty(&self) -> bool {
@@ -90,24 +87,31 @@ impl FromStr for AlbumDetail {
         let document = Document::from(s);
 
         // 1. title
-        let title = document.select(Name("h1")).next().unwrap();
+        let title = document.find(Name("h1")).next().unwrap();
         let title = parse_multi_language(&title);
 
         let info = document
-            .select(Attr("id", "album_infobit_large"))
-            .nth(0).unwrap();
+            .find(Attr("id", "album_infobit_large"))
+            .nth(0)
+            .unwrap();
 
         // 2. catalog
         let mut catalog = None;
         // 3. release date
         let mut release_date = None;
 
-        for line in info.select(Name("tr")) {
-            if let Some(key) = line.select(Name("span").and(Class("label")).descendant(Name("b"))).next() {
+        for line in info.find(Name("tr")) {
+            if let Some(key) = line
+                .find(Name("span").and(Class("label")).descendant(Name("b")))
+                .next()
+            {
                 let key = key.text();
                 if key == "Catalog Number" {
                     let value = line.last_child().unwrap();
-                    let value = if let Some(value) = value.select(Attr("id", "childbrowse").descendant(Name("a"))).next() {
+                    let value = if let Some(value) = value
+                        .find(Attr("id", "childbrowse").descendant(Name("a")))
+                        .next()
+                    {
                         value.text()
                     } else {
                         value.text()
@@ -135,14 +139,18 @@ impl FromStr for AlbumDetail {
         };
 
         // 4. track_list
-        let track_list_nav = document.select(Attr("id", "tlnav")).next().unwrap();
-        let track_list = document.select(Attr("id", "tracklist")).next().unwrap();
-        for list in track_list.select(Attr("class", "tl")) {
+        let track_list_nav = document.find(Attr("id", "tlnav")).next().unwrap();
+        let track_list = document.find(Attr("id", "tracklist")).next().unwrap();
+        for list in track_list.find(Attr("class", "tl")) {
             let reference = list.attr("id").unwrap();
-            let language = track_list_nav.select(Attr("rel", reference)).next().unwrap().text();
+            let language = track_list_nav
+                .find(Attr("rel", reference))
+                .next()
+                .unwrap()
+                .text();
 
             let mut discs = Vec::new();
-            for disc in list.select(Attr("style", "font-size:8pt").descendant(Name("b"))) {
+            for disc in list.find(Attr("style", "font-size:8pt").descendant(Name("b"))) {
                 let disc_title = disc.text();
                 let mut table = disc.parent().unwrap();
                 loop {
@@ -152,8 +160,12 @@ impl FromStr for AlbumDetail {
                     }
                 }
                 let mut tracks = Vec::new();
-                for track in table.select(Name("tr")) {
-                    let track_name = track.select(Name("td").and(Attr("width", "100%"))).next().unwrap().text();
+                for track in table.find(Name("tr")) {
+                    let track_name = track
+                        .find(Name("td").and(Attr("width", "100%")))
+                        .next()
+                        .unwrap()
+                        .text();
                     let track_name = track_name.trim().to_string();
                     tracks.push(track_name);
                 }
@@ -162,17 +174,22 @@ impl FromStr for AlbumDetail {
 
             if album.discs.is_empty() {
                 // initialize MultiLanguage tracks
-                album.discs.append(&mut discs.into_iter().map(|(title, tracks)| {
-                    let tracks = tracks.into_iter().map(|track| {
-                        let mut tracks = MultiLanguageString::default();
-                        tracks.insert(language.to_string(), track);
-                        tracks
-                    }).collect();
-                    Disc {
-                        title,
-                        tracks,
-                    }
-                }).collect::<Vec<_>>());
+                album.discs.append(
+                    &mut discs
+                        .into_iter()
+                        .map(|(title, tracks)| {
+                            let tracks = tracks
+                                .into_iter()
+                                .map(|track| {
+                                    let mut tracks = MultiLanguageString::default();
+                                    tracks.insert(language.to_string(), track);
+                                    tracks
+                                })
+                                .collect();
+                            Disc { title, tracks }
+                        })
+                        .collect::<Vec<_>>(),
+                );
             } else {
                 for (disc, (_, tracks)) in album.discs.iter_mut().zip(discs.into_iter()) {
                     for (track, new_track) in disc.tracks.iter_mut().zip(tracks.into_iter()) {
@@ -215,7 +232,8 @@ impl MultiLanguageString {
     }
 
     pub fn get(&self) -> Option<&str> {
-        self.0.get("ja")
+        self.0
+            .get("ja")
             .or_else(|| self.0.get("Japanese"))
             .or_else(|| self.0.get("English"))
             .or_else(|| self.0.values().next())

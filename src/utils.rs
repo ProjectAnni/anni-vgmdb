@@ -1,7 +1,7 @@
+use crate::models::MultiLanguageString;
+use crate::{Result, VGMError};
 use select::node::Node;
 use select::predicate::Attr;
-use crate::{Result, VGMError};
-use crate::models::MultiLanguageString;
 
 fn parse_month(input: &str) -> Result<u8> {
     // Months
@@ -31,7 +31,12 @@ pub(crate) fn parse_date(input: &str) -> Result<String> {
     return if parts.len() >= 3 {
         // 1. Month date, Year -> Month date Year
         //                          0    1    2
-        Ok(format!("{}-{:02}-{}", parts[2], parse_month(parts[0])?, parts[1]))
+        Ok(format!(
+            "{}-{:02}-{}",
+            parts[2],
+            parse_month(parts[0])?,
+            parts[1]
+        ))
     } else if parts.len() == 2 {
         // 2. Month Year
         Ok(format!("{}-{:02}", parts[1], parse_month(parts[0])?))
@@ -45,7 +50,7 @@ pub(crate) fn parse_date(input: &str) -> Result<String> {
 
 pub(crate) fn parse_multi_language(node: &Node) -> MultiLanguageString {
     let mut title = MultiLanguageString::default();
-    for node in node.select(Attr("class", "albumtitle")) {
+    for node in node.find(Attr("class", "albumtitle")) {
         let language = node.attr("lang").unwrap();
         let mut text = String::new();
         recur(&node, &mut text);

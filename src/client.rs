@@ -1,9 +1,9 @@
-use std::str::FromStr;
+use crate::models::{AlbumDetail, AlbumInfo, SearchResponse, SearchResult};
+use crate::utils::{parse_date, parse_multi_language};
+use crate::Result;
 use select::document::Document;
 use select::predicate::{Attr, Name, Predicate};
-use crate::models::{SearchResult, AlbumInfo, SearchResponse, AlbumDetail};
-use crate::Result;
-use crate::utils::{parse_date, parse_multi_language};
+use std::str::FromStr;
 
 #[derive(Default)]
 pub struct VGMClient {
@@ -12,9 +12,12 @@ pub struct VGMClient {
 
 impl VGMClient {
     pub async fn search_albums(&self, query: &str) -> Result<SearchResponse<'_>> {
-        let response = self.client.get(&format!("https://vgmdb.net/search?type=album&q={query}"))
+        let response = self
+            .client
+            .get(&format!("https://vgmdb.net/search?type=album&q={query}"))
             .header("Cookie", "TODO")
-            .send().await?;
+            .send()
+            .await?;
         if response.url().path().starts_with("/album") {
             Ok(SearchResponse::new(
                 self,
@@ -25,8 +28,10 @@ impl VGMClient {
             let document = Document::from(html.as_str());
 
             let mut results = Vec::new();
-            for row in document.select(Attr("id", "albumresults").descendant(Name("tr").and(Attr("rel", "rel_invalid")))) {
-                let cells = row.select(Name("td")).collect::<Vec<_>>();
+            for row in document.find(
+                Attr("id", "albumresults").descendant(Name("tr").and(Attr("rel", "rel_invalid"))),
+            ) {
+                let cells = row.find(Name("td")).collect::<Vec<_>>();
 
                 // 1. get catalog
                 let catalog = cells[0].text();
@@ -44,13 +49,22 @@ impl VGMClient {
                 let release_date = parse_date(release_date.trim())?;
 
                 // 4. get album link
-                let link = cells[2].select(Name("a")).next().unwrap().attr("href").unwrap().to_string();
+                let link = cells[2]
+                    .find(Name("a"))
+                    .next()
+                    .unwrap()
+                    .attr("href")
+                    .unwrap()
+                    .to_string();
 
                 results.push(AlbumInfo {
                     catalog,
                     title,
                     release_date,
-                    id: link.strip_prefix("https://vgmdb.net/album/").unwrap().to_string(),
+                    id: link
+                        .strip_prefix("https://vgmdb.net/album/")
+                        .unwrap()
+                        .to_string(),
                 });
             }
 
@@ -59,9 +73,12 @@ impl VGMClient {
     }
 
     pub async fn album(&self, id: &str) -> Result<AlbumDetail> {
-        let response = self.client.get(&format!("https://vgmdb.net/album/{id}"))
+        let response = self
+            .client
+            .get(&format!("https://vgmdb.net/album/{id}"))
             .header("Cookie", "TODO")
-            .send().await?;
+            .send()
+            .await?;
         let html = response.text().await?;
         AlbumDetail::from_str(html.as_str())
     }
